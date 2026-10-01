@@ -6,7 +6,12 @@
   "authors": [
     "ReModded Team"
   ],
-  "dependencies": [],
+  "dependencies": [
+    {
+      "id": "floodgate",
+      "optional": true
+    }
+  ],
   "url": "https://github.com/ReModded/ReWhitelist",
   "main": "dev.remodded.rewhitelist.ReWhitelist"
 }

@@ -43,7 +43,7 @@ object WhitelistManagementSubcommand {
             literal("remove")
                 .requires(CommandUtils.permissionRequirement("rewhitelist.command.whitelist.remove"))
                 .then(
-                    argument("entry", StringArgumentType.string())
+                    argument("entry", StringArgumentType.greedyString())
                         .executes { ctx -> removeWhitelistEntry(ctx.source, whitelistResolver(ctx), StringArgumentType.getString(ctx, "entry")) }
                 )
         )

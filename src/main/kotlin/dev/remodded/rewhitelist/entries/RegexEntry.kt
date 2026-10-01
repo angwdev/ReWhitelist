@@ -36,7 +36,7 @@ class RegexEntry(factory: Factory, val regex: Regex) : Entry(factory) {
         }
 
         override fun getCommandNode(entryConsumer: (CommandContext<CommandSource>, RegexEntry) -> Unit): ArgumentBuilder<CommandSource, *> {
-            return argument<CommandSource, String>("regex", StringArgumentType.string())
+            return argument<CommandSource, String>("regex", StringArgumentType.greedyString())
                 .executes { ctx ->
                     entryConsumer(ctx, RegexEntry(this, Regex(StringArgumentType.getString(ctx, "regex"))))
                     0

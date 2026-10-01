@@ -17,17 +17,19 @@ import java.net.UnknownHostException
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
-import kotlin.math.min
 
 class IPEntry private constructor(factory: Factory, val minAddress: InetAddress, val maxAddress: InetAddress) : Entry(factory) {
 
     override fun match(player: Player): Boolean {
         val address = player.remoteAddress.address.address
+        // Different address family (IPv4 vs IPv6) can never be within the range
+        if (address.size != minAddress.address.size)
+            return false
         return compareIps(address, minAddress.address) >= 0 && compareIps(address, maxAddress.address) <= 0
     }
 
     override fun toString(): String {
-        return "$${minAddress.hostAddress}-${maxAddress.hostAddress}"
+        return "${minAddress.hostAddress}-${maxAddress.hostAddress}"
     }
 
     object Factory : Entry.Factory<IPEntry>() {
@@ -48,18 +50,15 @@ class IPEntry private constructor(factory: Factory, val minAddress: InetAddress,
             )
         }
 
+        // Greedy, so that unquoted CIDR masks (/) and IPv6 addresses (:) are accepted
         override fun getCommandNode(entryConsumer: (CommandContext<CommandSource>, IPEntry) -> Unit): ArgumentBuilder<CommandSource, *> =
-            argument("minAddress", StringArgumentType.string())
-                .then(
-                    argument("maxAddress", StringArgumentType.string())
-                        .executes { ctx ->
-                            val entry = addEntry(StringArgumentType.getString(ctx, "minAddress"), StringArgumentType.getString(ctx, "maxAddress"))
-                            entryConsumer(ctx, entry)
-                            0
-                        }
-                )
+            argument("address", StringArgumentType.greedyString())
                 .executes { ctx ->
-                    val entry = addEntry(StringArgumentType.getString(ctx, "minAddress"), null)
+                    val input = StringArgumentType.getString(ctx, "address").trim()
+                    val addresses = input.split(Regex("\\s+"))
+                    if (addresses.size > 2) throw MALFORMED_ADDRESS_RANGE_EXCEPTION.create(input)
+
+                    val entry = addEntry(addresses[0], addresses.getOrNull(1))
                     entryConsumer(ctx, entry)
                     0
                 }
@@ -145,7 +144,7 @@ class IPEntry private constructor(factory: Factory, val minAddress: InetAddress,
             var maskBits: Int = mask
             val maskBytes = ByteArray(ipAddressLength)
             for (i in 0..<ipAddressLength) {
-                maskBytes[i] = (0xFF shl (8 - min(8, maskBits))).toByte()
+                maskBytes[i] = (0xFF shl (8 - maskBits.coerceIn(0, 8))).toByte()
                 maskBits -= 8
             }
             return maskBytes
