@@ -78,7 +78,6 @@ class ReWhitelist @Inject constructor(
     private fun initStorage() {
         storage = when (config.storage.type) {
             WhitelistStorage.Type.TOML_FILE -> TomlFileStorage(config.storage)
-            else -> throw IllegalStateException("Unknown storage type")
         }
     }
 

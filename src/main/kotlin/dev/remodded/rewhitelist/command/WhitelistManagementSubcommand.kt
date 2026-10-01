@@ -14,11 +14,10 @@ import dev.remodded.rewhitelist.entries.Entry
 import dev.remodded.rewhitelist.utils.CommandUtils
 import dev.remodded.rewhitelist.utils.CommandUtils.argument
 import dev.remodded.rewhitelist.utils.CommandUtils.literal
+import dev.remodded.rewhitelist.utils.Pagination
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.event.HoverEvent
-import net.kyori.adventure.text.feature.pagination.Pagination
 import net.kyori.adventure.text.format.NamedTextColor
 
 object WhitelistManagementSubcommand {
@@ -44,7 +43,7 @@ object WhitelistManagementSubcommand {
             literal("remove")
                 .requires(CommandUtils.permissionRequirement("rewhitelist.command.whitelist.remove"))
                 .then(
-                    argument("entry", StringArgumentType.string())
+                    argument("entry", StringArgumentType.greedyString())
                         .executes { ctx -> removeWhitelistEntry(ctx.source, whitelistResolver(ctx), StringArgumentType.getString(ctx, "entry")) }
                 )
         )
@@ -158,58 +157,35 @@ object WhitelistManagementSubcommand {
             .append(Component.text("]", NamedTextColor.GRAY))
             .build()
 
-        Pagination.builder()
-            .renderer(object : Pagination.Renderer {
-                override fun renderEmpty(): Component {
-                    val header = renderHeader(header, 0, 0)
-                    val line = Component.text("-".repeat((50 - length(header)) / 2), NamedTextColor.DARK_GRAY)
-                    return Component.text()
-                        .append(line)
-                        .append(header)
-                        .append(line)
-                        .append(Component.newline())
-                        .append(Component.text("NO ENTRIES", NamedTextColor.GRAY))
-                        .append(Component.newline())
-                        .append(Component.text("-".repeat(50), NamedTextColor.DARK_GRAY))
-                        .build()
-                }
-
-                fun length(component: Component): Int {
-                    return (if (component is TextComponent) component.content().length else 0) +
-                        component.children().sumOf { length(it) }
-                }
-            })
-            .width(50).build(
-            header,
-            Pagination.Renderer.RowRenderer<Entry> { entry, index ->
-                if (entry == null)
-                    return@RowRenderer emptyList()
-                listOf<Component>(
-                    Component.text()
-                        .append(Component.text(entry.factory.type.replaceFirstChar { c -> c.titlecase() }
-                            .padEnd(maxEntryTypeLength, ' '), NamedTextColor.GOLD))
-                        .append(Component.text(" Entry: ", NamedTextColor.BLUE))
-                        .append(Component.text(entry.toString(), NamedTextColor.GREEN))
-                        .append(
-                            Component.text()
-                                .append(Component.text(" [", NamedTextColor.GRAY))
-                                .append(
-                                    Component.text("remove", NamedTextColor.RED)
-                                        .clickEvent(ClickEvent.runCommand("/whitelist ${whitelist.name} remove $entry"))
-                                        .hoverEvent(
-                                            HoverEvent.showText(
-                                                Component.text()
-                                                    .append(Component.text("Remove entry ", NamedTextColor.RED))
-                                                    .append(Component.text(entry.toString(), NamedTextColor.YELLOW))
-                                            )
+        Pagination<Entry>(
+            title = header,
+            pageCommand = { p -> "/whitelist ${whitelist.name} list $p" },
+        ) { entry, _ ->
+            listOf<Component>(
+                Component.text()
+                    .append(Component.text(entry.factory.type.replaceFirstChar { c -> c.titlecase() }
+                        .padEnd(maxEntryTypeLength, ' '), NamedTextColor.GOLD))
+                    .append(Component.text(" Entry: ", NamedTextColor.BLUE))
+                    .append(Component.text(entry.toString(), NamedTextColor.GREEN))
+                    .append(
+                        Component.text()
+                            .append(Component.text(" [", NamedTextColor.GRAY))
+                            .append(
+                                Component.text("remove", NamedTextColor.RED)
+                                    .clickEvent(ClickEvent.runCommand("/whitelist ${whitelist.name} remove $entry"))
+                                    .hoverEvent(
+                                        HoverEvent.showText(
+                                            Component.text()
+                                                .append(Component.text("Remove entry ", NamedTextColor.RED))
+                                                .append(Component.text(entry.toString(), NamedTextColor.YELLOW))
                                         )
-                                )
-                                .append(Component.text("]", NamedTextColor.GRAY))
-                        )
-                        .build()
-                )
-            }
-        ) { p -> "/whitelist ${whitelist.name} list $p" }.render(whitelist.entries, page).forEach(src::sendMessage)
+                                    )
+                            )
+                            .append(Component.text("]", NamedTextColor.GRAY))
+                    )
+                    .build()
+            )
+        }.render(whitelist.entries, page).forEach(src::sendMessage)
 
         return 0
     }
