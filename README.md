@@ -6,6 +6,8 @@ You no longer need to add or remove users from one whitelist, you just need to e
 ## Download
 You can download the latest version of the plugin from the [Modrinth](https://modrinth.com/plugin/rewhitelist) or [Hangar](https://hangar.papermc.io/ReModded/ReWhitelist).
 
+Requires Velocity 4.0+ (Java 25 or newer).
+
 ## Issues & suggestions
 If you have any issues or suggestions, please report them in the [issues](https://github.com/ReModded/ReWhitelist/issues) section.
 

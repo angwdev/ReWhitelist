@@ -2,8 +2,8 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.shadow)
-    id("org.jetbrains.kotlin.plugin.serialization") version (libs.versions.kotlin)
     alias(libs.plugins.runTask)
 }
 
@@ -11,10 +11,9 @@ group = "dev.remodded"
 version = "1.0.4"
 
 repositories {
-    maven("https://repo.remodded.dev/repository/PaperMC/")
-    maven("https://repo.remodded.dev/repository/maven-public/")
-    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-        name = "sonatype-oss-snapshots"
+    mavenCentral()
+    maven("https://repo.papermc.io/repository/maven-public/") {
+        name = "papermc"
     }
     maven("https://repo.opencollab.dev/main/") {
         name = "GeyserMC"
@@ -23,12 +22,16 @@ repositories {
 
 dependencies {
     compileOnly(libs.velocity.api)
+    compileOnly(libs.floodgate.api)
 
-    implementation(libs.kyori.pagginate)
+    // toml4j is deprecated in Velocity API and will be removed, so we ship our own (relocated) copy
+    implementation(libs.toml4j) {
+        exclude(group = "com.google.code.gson", module = "gson")
+    }
+}
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
-    compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
+kotlin {
+    jvmToolchain(libs.versions.java.get().toInt())
 }
 
 tasks {
@@ -40,6 +43,8 @@ tasks {
     shadowJar {
         archiveBaseName.set("ReWhitelist")
         archiveClassifier.set("")
+
+        relocate("com.moandjiezana.toml", "dev.remodded.rewhitelist.libs.toml4j")
     }
 
     build {

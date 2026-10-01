@@ -7,8 +7,8 @@ import org.geysermc.floodgate.api.FloodgateApi
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URI
+import java.time.Duration
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.jvm.optionals.getOrNull
 
 object OfflinePlayerUtils {
@@ -78,7 +78,7 @@ object OfflinePlayerUtils {
 
     private fun createCache(): MutableMap<String, UUID> {
         return CacheBuilder.newBuilder()
-            .expireAfterWrite(ReWhitelist.config.uuidCacheDuration, TimeUnit.SECONDS)
+            .expireAfterWrite(Duration.ofSeconds(ReWhitelist.config.uuidCacheDuration))
             .build<String, UUID>().asMap()
     }
 }
